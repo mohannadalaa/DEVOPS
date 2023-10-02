@@ -7,7 +7,7 @@ function App() {
 
 var [weather, setweather] = useState<any[]>([]);
   const fetchWeather = async () => {
-    var response = await axios.get("https://localhost:32777/WeatherForecast");
+    var response = await axios.get("http://localhost:14600/WeatherForecast");
     setweather(response.data);
   }
 
