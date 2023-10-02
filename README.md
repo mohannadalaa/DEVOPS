@@ -1,6 +1,6 @@
 used commands
 
-to kill the container "you can use "
+to kill the container
 docker kill devopsbackendcontainer 
 
 to remove the container
