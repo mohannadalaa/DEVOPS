@@ -1,11 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import axios from 'axios';
 
 function App() {
+
+var [weather, setweather] = useState<any[]>([]);
+  const fetchWeather = async () => {
+    var response = await axios.get("https://localhost:32777/WeatherForecast");
+    setweather(response.data);
+  }
+
+  useEffect(() => {
+    fetchWeather();
+  }, []);
+
+
   return (
     <div className="App">
       <header className="App-header">
+        {weather.map(w => 
+          <div>Date: {w.date}, Temp:{w.temperatureC}, Summary:{w.summary} </div>
+          )}
         <img src={logo} className="App-logo" alt="logo" />
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
