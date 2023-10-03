@@ -1,21 +1,3 @@
-used commands
-
-to kill the container
-docker kill devopsbackendcontainer 
-
-to remove the container
-docker rm devopsbackendcontainer
-
-to build the image
-docker build -t devopsfrontendimage  .
-docker build -t devopsbackendimage .
-
-to run both apps
-docker run --name devopsfrontendcontainer -p 3000:3000 -d  devopsfrontendimage
-docker run --name devopsbackendcontainer -e ASPNETCORE_ENVIRONMENT=Development -p 14600:80 -p 14700:443 -d devopsbackendimage
-
--------------------------------------------------------------------------------
-General notes:
 docker file => generate an image which is excutable file => excute it to create container that contains out app
 
 example of basic node app docker file
@@ -36,20 +18,20 @@ CMD ["npm","run","start"] => to run our app inside the container
 to build the image using docker cli:
 docker build -t <imagename> .
 -t => tagging the image with a name
-. specify the directory where the docker file lives
+. => specify the directory where the docker file lives
 
 docker build -t mynodeappimage .
 
-docker images: list all our images
+docker images => list all our images
 
 then we need to run the image
 docker run --name <container name> <image name>
-docker run --name mynodeappcontainer mynodeappimage
+ex => docker run --name mynodeappcontainer mynodeappimage
 
 docker ps => to see running images or i can check docker desktop app
 
 then we need a port mapping to be able to pull the container app port into our local machine port:
-docker run --name <containername> -p <localport>:<containerapp port>  <imagename>
+docker run --name <containername> -p <exposedport>:<containerapp port>  <imagename>
 
 docker run --name mynodeappcontainer -p 8060:3000  mynodeappimage
 
@@ -63,12 +45,12 @@ docker stop/kill <containername> => to stop the container
 stop => stops the container gradually to make a safe stop
 kill => directly kills it
 
-docker rm <containername> => to remove it
-docker rm <imagename> => to remove it
+docker rm <containername> => to remove container
+docker rm <imagename> => to remove image
 ------------------------------------------------------
 Volumes:
-to sync between the working directory and out local machine we use bind mounts volums -v
-docker run --name mynodeappcontainer -p 8060:3000 -v $(C:\Users\mohannad.alaa\Desktop\Dockerstudy\nodeapp):/use/src/app  mynodeappimage
+to sync between the working directory and our local machine we use bind mounts volums -v
+docker run --name mynodeappcontainer -p 8060:3000 -v $(C:\Users\mohannad.alaa\Desktop\Dockerstudy\nodeapp)/src:/use/src/app  mynodeappimage
 
 ----------------------------------------------------------
 to leave some files as it is in the container we can use anonymous volume like if we need to maintain  node modules folder
@@ -104,3 +86,51 @@ regex can be used in the docker file ex: COPY go.*
 ----------------------------------------
 if i need the docker run command not consume my terminal we can add -d stands for detach in the command before the image name
 ------------------------------------------
+docker images => to display current images
+------------------------------------------
+lets say i have an app using mongo db so the normal flow to have a mongo db container is to :
+make a docker file > build it to get an image > run the image to get the mongo DB container
+
+Another approache that we can run "docker run mongo" so it will look in our local images for a mongo image but it will not find it so it will go automatically to docker hub and pull that image and build and run it
+-------------------------------------------
+i can avoid the step of deleting the container after stopping it with adding --rm when running the container to delete it when we stop or kill it => docker run --rm imagename
+---------------------------------------------
+Use case: i have a backend node js app running on a container and it needs to connect to mongo db container
+
+First approache:
+i can expose a port from the mongo db container and connect to it from the node js container on our local machine
+lets say we are exposing mongo db image on 27017 and we will have a collection called todos
+mongo url in this case: "mongodb://host.docker.internal:27017/todos"
+host.docker.internal => this is used to let the docker container know that we need to access the local machine which the container is used on
+but this is not a good approache as this will not work when deploy the 2 containers 
+----------
+Second approache:
+using IP address of the mongo DB container
+to get the IP address of already running container
+docker container inspect <containername>
+then we look for the ip address, so the mongo db connection string will be something like this:
+mongodb://172.17.0.2:27017/todos
+
+but also this approache not the best one as i may not be able to get this IP address on prod environment also this may change by time so i will need to update all the apps using it
+----------
+Third approache: using docker networks "best one"
+by placing the two container on the same network so the mongo connection string will be something like this:
+mongodb://<containername>:27017/todos
+so this will search the container name and replace it with what ever ip in the network
+
+to list the running networks
+docker network ls
+
+to create a new network
+docker network create <newtwork name>
+
+then we can run both backend and mongo containers inside the newly created network by using --newtwork <networkname> in the docker run command
+docker run --rm --name containername --newtwork networkname imagename
+
+------------------------------------------------
+Docker compose:
+docker compose up => to put all the instructions needed to run out app in specific order to avoid to do it manually every time
+
+on the directory of docker compose file
+docker-compose up => to run the file
+docker-compose down => to undo the changes
